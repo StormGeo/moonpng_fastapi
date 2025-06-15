@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import HTTPException, Query
+from fastapi import HTTPException, Body, Query
 from pydantic import BaseModel, Field, root_validator
 
 
