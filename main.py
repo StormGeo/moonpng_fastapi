@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, Body
 from fastapi.responses import StreamingResponse
 import matplotlib.pyplot as plt
 from io import BytesIO
@@ -134,7 +134,7 @@ def moonpng(params: MoonPngParams = Depends(get_params)):
 @app.post(
     "/moonpng", summary="Obter dados meteorológicos para múltiplas variáveis via POST"
 )
-def moonpng_post(params_list: list[MoonPngParams] = Depends(get_params)):
+def moonpng_post(params_list: list[MoonPngParams] = Body(...)): # Depends(get_params)
     results = []
     for params in params_list:
         # try:
