@@ -39,4 +39,4 @@ def plot(params, lons, lats, data):
 
     ax.set_title(f"{params.variable} over time")
 
-    return fig
+    return fig, ax

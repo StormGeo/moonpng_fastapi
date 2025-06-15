@@ -62,7 +62,7 @@ def get_image(params: MoonPngParams):
     lons = dataset.longitude.values
     lats = dataset.latitude.values
     data = dataset.values
-    figure = plot_utils.plot(params, lons, lats, data)
+    figure, ax = plot_utils.plot(params, lons, lats, data)
 
     image = BytesIO()
 
@@ -76,7 +76,7 @@ def get_image(params: MoonPngParams):
     image.seek(0)
     
     #image = plot_utils.compress_image(image)
-    return image, figure, dataset
+    return figure, ax, image, figure, dataset
 
 def get_image_profiler(params: MoonPngParams):
     with profile_block("geração da imagem"):
@@ -120,14 +120,14 @@ def get_image_profiler(params: MoonPngParams):
 def moonpng(params: MoonPngParams = Depends(get_params)):
 
     try:
-        # image, figure, dataset = get_image_profiler(params)
-        image, figure, dataset = get_image(params)
-
+        figure, ax, image, figure, dataset = get_image(params)
         return StreamingResponse(image, media_type="image/png")
 
     finally:
-        nc_utils.close_and_destroy(dataset)
-        plt.close(figure)
+        if dataset is not None:
+            nc_utils.close_and_destroy(dataset)
+        if figure is not None:
+            plt.close(figure)
 
 
 
@@ -137,12 +137,14 @@ def moonpng(params: MoonPngParams = Depends(get_params)):
 def moonpng_post(params_list: list[MoonPngParams] = Depends(get_params)):
     results = []
     for params in params_list:
-        path_in = path(params)
-        results.append(
-            {
-                "params": params,
-                "path": path_in,
-                "message": "Dados meteorológicos processados com sucesso",
-            }
-        )
-    return {"results": results}
+        # try:
+        figure, ax, image, figure, dataset = get_image(params)
+        results.append((params, figure, ax, image, dataset))
+    print(results)
+    return StreamingResponse(image, media_type="image/png")
+
+        # finally:
+        #     nc_utils.close_and_destroy(dataset)
+        #     plt.close(figure)
+            
+    # return {"results": results}

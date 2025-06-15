@@ -6,7 +6,7 @@ import pandas as pd
 
 
 def gen_path_template(params):
-
+    print(params)
     dir_in = "{params.source}/{params.kind}/{params.model}/{params.variable}/%Y/%j/"
 
     if params.kind == "observed":
