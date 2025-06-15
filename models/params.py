@@ -93,7 +93,7 @@ class MoonPngParams(BaseModel):
         return values
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "kind": "forecast",
                 "model": "gfs_glo",

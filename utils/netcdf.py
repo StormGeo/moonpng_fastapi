@@ -4,9 +4,13 @@ import time
 import os
 from fastapi import HTTPException
 
+CHUNKS = {
+    'time': 'auto', 
+    'latitude': 'auto', 
+    'longitude': 'auto'
+}
 
 def close_and_destroy(dataset):
-    time.sleep(0.2)
     try:
         dataset.close()
         return True
@@ -16,31 +20,9 @@ def close_and_destroy(dataset):
         return False
 
 def run_validate(paths: list, variable: str):
-    validated_paths = list()
-    for path_in in paths:
-        if os.path.isfile(path_in):
-            validated_paths.append(path_in)
-    
-    if validated_paths:
+    validated_paths = [p for p in paths if os.path.isfile(p)]
 
-        for path_in in validated_paths:
-            try:
-                dataset = xr.open_dataarray(path_in, cache=True, engine="netcdf4")
-                close_and_destroy(dataset)
-                print(f"Validated path: {path_in}")
-            except Exception as e:
-                msg = {
-                    "function_name": f"run_validate()",
-                    "message": f"error processing {path_in}",
-                    "error": str(e),
-                }
-                raise HTTPException(
-                    status_code=500,
-                    detail=msg,
-                )
-        return validated_paths
-
-    else:
+    if not validated_paths:
         msg = {
             "function_name": f"run_validate()",
             "message": f"no valid paths found for variable {variable}",
@@ -50,24 +32,26 @@ def run_validate(paths: list, variable: str):
                 status_code=400,
                 detail=msg,
             )
+        
+    else:
+        return validated_paths
 
 
-def get_data(path_or_paths: list | str):
+def get_data(path_or_paths: list | str, variable: str):
     try:
         if isinstance(path_or_paths, list) and len(path_or_paths) > 1:
             return xr.open_mfdataset(
                 path_or_paths,
-                #cache=True,
                 combine="by_coords",
-                compat="broadcast_equals",
-                #engine="netcdf4",
-                parallel=True,
-            )
+                #parallel=True, 
+                engine="netcdf4", 
+                chunks=CHUNKS
+            )[variable]
         elif isinstance(path_or_paths, list) and len(path_or_paths) == 1:
-            return xr.open_dataarray(path_or_paths[0], cache=True, engine="netcdf4")
+            return xr.open_dataset(path_or_paths[0], engine="netcdf4", chunks=CHUNKS)[variable]
         
         else:
-            return xr.open_dataarray(path_or_paths, cache=True, engine="netcdf4")
+            return xr.open_dataset(path_or_paths, engine="netcdf4", chunks=CHUNKS)[variable]
 
     except Exception as e:
         msg = {
@@ -75,4 +59,7 @@ def get_data(path_or_paths: list | str):
             "message": f"something is wrong:\n{path_or_paths}",
             "error": e,
         }
-        raise Exception(msg)
+        raise HTTPException(
+            status_code=400,
+            detail=msg,
+        )
