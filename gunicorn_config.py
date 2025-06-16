@@ -21,7 +21,7 @@ max_requests_jitter = 50
 # Nível de log
 loglevel = "info"
 accesslog = "-"  # log no stdout
-errorlog = "-"   # log no stderr
+errorlog = "-"  # log no stderr
 
 # Nome do processo (aparece no top/htop)
 proc_name = "moonpng-api"

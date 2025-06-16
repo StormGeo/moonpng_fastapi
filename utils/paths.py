@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
-
 from functools import lru_cache
+
 import pandas as pd
 
 
@@ -26,11 +26,8 @@ def gen_path_template(params):
         file_in = "{params.model}_{params.variable}_{params.member}_%Y%m%d.nc"
         freq = "1D"
 
-    return (
-        os.path.join(dir_in, file_in).format(params=params),
-        freq
-    )    
-    
+    return (os.path.join(dir_in, file_in).format(params=params), freq)
+
 
 # def get_paths(params, path_template, freq):
 #     if params.initDate and params.endDate:
@@ -39,6 +36,7 @@ def gen_path_template(params):
 
 #     else:
 #         return [datetime.fromisoformat(params.date).strftime(path_template)]
+
 
 def get_paths(params, path_template, freq):
     """

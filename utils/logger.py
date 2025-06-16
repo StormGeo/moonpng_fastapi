@@ -1,7 +1,8 @@
+import json
 import logging
 import sys
-import json
 from datetime import datetime
+
 
 class JsonFormatter(logging.Formatter):
     def format(self, record):

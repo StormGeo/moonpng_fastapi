@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import HTTPException, Body, Query
+from fastapi import Body, HTTPException, Query
 from pydantic import BaseModel, Field, root_validator
 
 
@@ -8,62 +8,72 @@ class MoonPngParams(BaseModel):
     kind: str = Field(..., description="Tipo de dado meteorológico.")
     model: str = Field(..., description="Modelo numérico utilizado.")
     variable: str = Field(..., description="Variável meteorológica.")
-    date: str = Field(default=datetime.utcnow().isoformat(), description="Data da previsão no formato ISO 8601.")
-    initDate: str | None = Field(default=None, description="Data inicial do intervalo.")
-    endDate: str | None = Field(default=None, description="Data final do intervalo.")
+    date: str = Field(
+        default=datetime.utcnow().isoformat(),
+        description="Data da previsão no formato ISO 8601.",
+    )
+    initDate: str = Field(default=datetime.utcnow().isoformat(), description="Data inicial do intervalo.")
+    endDate: str = Field(default=datetime.utcnow().isoformat(), description="Data final do intervalo.")
     member: str = Field(
         default="M000", description="Membro do modelo para previsões, se aplicável."
     )
-
+    dpi: int = Field(default=100, description="Resolução da imagem.")
     source: str = Field(default="/data", description="Diretório de origem dos dados.")
-    aggregation: str | None = Field(
-        default=None, description="Tipo de agregação temporal dos dados."
-    )
-    smoothed: bool = Field(
-        default=False, description="Se os dados devem ser suavizados."
-    )
-    resolution: float | None = Field(default=None, description="Resolução da imagem.")
-    extent: str | None = Field(
-        default=None, description="Extensão geográfica do recorte."
-    )
-
-    yclim: int = Field(default=1991, description="Ano base da climatologia.")
-    title: str | None = Field(default=None, description="Título da figura.")
-    cbar_cfg: str | None = Field(
-        default=None, description="Configuração personalizada de colorbar."
-    )
-    colorbar: str | None = Field(default=None, description="Colorbar utilizada.")
-    showcolorbar: bool = Field(
-        default=True, description="Se o colorbar deve ser exibido."
-    )
-    titlevariable: str | None = Field(default=None, description="Título da variável.")
-    dt_isoline: str | None = Field(
-        default=None, description="Delta de tempo entre isolinhas."
-    )
-
-    shapecontours: str | None = Field(
+    aggregation: str | None = Field(default=None, description="Tipo de agregação temporal dos dados.")
+    contourf: bool = Field(default=False, description="Se usa contornos preenchidos.")
+    contour: bool = Field(default=False, description="Se usa contornos de isolinhas.")
+    linewidths: float = Field(default=1, description="linewidths")
+    color: str = Field(default="black", description="color")
+    zorder: int = Field(default=1, description="zorder")
+    levels: dict | list | None = Field(default=None, description="levels")
+    extent: str | list | None = Field(default=None, description="Extensão geográfica do recorte.")
+    details: bool | dict | None = Field(default=True, description="details")
+    gridlines: bool | dict | None = Field(default=True, description="gridlines")
+    mask: str | None = Field(default=None, description="mask")
+    ocean: bool = Field(default=True, description="Se desenha o oceano.")
+    shapecontours: str | dict | None = Field(
         default=None, description="Contornos de shapefiles."
     )
-    mask: str | None = Field(default=None, description="Máscara geográfica aplicada.")
-    pad: float = Field(
-        default=0.75, description="Espaçamento entre elementos do gráfico."
-    )
-    points: str | None = Field(
-        default=None, description="Pontos geográficos a destacar."
+    colorbar: str | dict | None = Field(
+        default=None, description="colorbar."
     )
 
-    legend: str | None = Field(default=None, description="Legenda personalizada.")
-    polygon_color: str | None = Field(
-        default=None, description="Cor de polígonos adicionados."
-    )
-    alpha: float = Field(default=0.5, description="Transparência da imagem.")
-    dpi: int = Field(default=100, description="Resolução da imagem.")
-    grid: bool = Field(default=True, description="Se exibe grade no mapa.")
-    ocean: bool = Field(default=True, description="Se desenha o oceano.")
-    pltmethod: str | None = Field(default=None, description="Método de plotagem.")
-    interpolation: str = Field(
-        default="nearest", description="Método de interpolação da imagem."
-    )
+
+    # smoothed: bool = Field(
+    #     default=False, description="Se os dados devem ser suavizados."
+    # )
+    # resolution: float | None = Field(default=None, description="Resolução da imagem.")
+
+    # yclim: int = Field(default=1991, description="Ano base da climatologia.")
+    # title: str | None = Field(default=None, description="Título da figura.")
+    # cbar_cfg: str | None = Field(
+    #     default=None, description="Configuração personalizada de colorbar."
+    # )
+    # showcolorbar: bool = Field(
+    #     default=True, description="Se o colorbar deve ser exibido."
+    # )
+    # titlevariable: str | None = Field(default=None, description="Título da variável.")
+    # dt_isoline: str | None = Field(
+    #     default=None, description="Delta de tempo entre isolinhas."
+    # )
+
+    # pad: float = Field(
+    #     default=0.75, description="Espaçamento entre elementos do gráfico."
+    # )
+    # points: str | None = Field(
+    #     default=None, description="Pontos geográficos a destacar."
+    # )
+
+    # legend: str | None = Field(default=None, description="Legenda personalizada.")
+    # polygon_color: str | None = Field(
+    #     default=None, description="Cor de polígonos adicionados."
+    # )
+    # alpha: float = Field(default=0.5, description="Transparência da imagem.")
+    # grid: bool = Field(default=True, description="Se exibe grade no mapa.")
+    # pltmethod: str | None = Field(default=None, description="Método de plotagem.")
+    # interpolation: str = Field(
+    #     default="nearest", description="Método de interpolação da imagem."
+    # )
 
     @root_validator(skip_on_failure=True)
     def validate_combination(cls, values):
@@ -71,6 +81,14 @@ class MoonPngParams(BaseModel):
         model = values.get("model")
         variables = values.get("variable")
         date = values.get("date")
+        contourf = values.get("contourf")
+        contour = values.get("contour")
+
+        if not contourf and not contour:
+            raise HTTPException(
+                status_code=400,
+                detail="Pelo menos um dos parâmetros 'contourf' ou 'contour' deve ser verdadeiro.",
+            )
 
         if model == "chimera_as" and "500hPa_geopotential_height" in variables:
             raise HTTPException(
@@ -94,13 +112,38 @@ class MoonPngParams(BaseModel):
 
     class Config:
         json_schema_extra = {
-            "example": {
-                "kind": "forecast",
-                "model": "gfs_glo",
-                "variable": "2m_air_temperature",
-                "date": "2025-06-14T12:00:00Z",
-            }
+            "example": [
+                {
+                    "kind": "observed",
+                    "model": "ct_observed_as",
+                    "variable": "2m_air_temperature",
+                    "date": "2025-06-09T00:00:00",
+                    "source": "data",
+                    "initDate": "2025-06-09T00:00:00",
+                    "endDate": "2025-06-09T00:00:00",
+                    "aggregation": "mean",
+                    "contourf": "True",
+                    "levels": {"vmin": 0, "vmax": 40, "step": 5},
+                    # "levels": [0, 5, 10, 15, 20, 25, 30, 35, 40],
+                },
+                {
+                    "kind": "observed",
+                    "model": "ct_observed_as",
+                    "variable": "2m_air_temperature",
+                    "date": "2025-06-09T00:00:00",
+                    "source": "data",
+                    "initDate": "2025-06-09T00:00:00",
+                    "endDate": "2025-06-11T00:00:00",
+                    "aggregation": "max",
+                    "contour": "True",
+                    "linewidths": 6,
+                    "zorder": 2,
+                    "levels": {"vmin": 0, "vmax": 40, "step": 5},
+                    # "levels": [0, 5, 10, 15, 20, 25, 30, 35, 40],
+                }
+            ]
         }
+
 
 
 def get_params(
@@ -109,54 +152,61 @@ def get_params(
     variable: str = Query(
         ..., description="Variável ou lista de variáveis meteorológicas."
     ),
-    date: str | None = Query(default=datetime.utcnow(), description="Data da previsão no formato ISO 8601."),
+    date: str | None = Query(
+        default=datetime.utcnow().isoformat(), description="Data da previsão no formato ISO 8601."
+    ),
     member: str = Query(
         "M000", description="Membro do modelo para previsões, se aplicável."
     ),
     source: str = Query("/data", description="Diretório de origem dos dados."),
-    initDate: str | None = Query(None, description="Data inicial do intervalo."),
-    endDate: str | None = Query(None, description="Data final do intervalo."),
-    hours: int = Query(0, description="Número de horas a considerar."),
+    initDate: str = Query(datetime.utcnow().isoformat(), description="Data inicial do intervalo."),
+    endDate: str = Query(datetime.utcnow().isoformat(), description="Data final do intervalo."),
     aggregation: str | None = Query(None, description="Tipo de agregação temporal."),
-    smoothed: bool = Query(False, description="Se os dados devem ser suavizados."),
-    resolution: float | None = Query(None, description="Resolução da imagem."),
-    extent: str | None = Query(None, description="Extensão geográfica do recorte."),
-    windlevel: str | None = Query(None, description="Nível vertical do vento."),
-    vmin: float | None = Query(None, description="Valor mínimo da escala de cores."),
-    vmax: float | None = Query(None, description="Valor máximo da escala de cores."),
-    freq: str | None = Query(None, description="Frequência temporal dos dados."),
-    yclim: int = Query(1991, description="Ano base da climatologia."),
-    title: str | None = Query(None, description="Título da figura."),
-    cbar_cfg: str | None = Query(
-        None, description="Configuração personalizada do colorbar."
-    ),
-    colorbar: str | None = Query(None, description="Colorbar utilizada."),
-    showcolorbar: bool = Query(True, description="Exibir colorbar."),
-    titlevariable: str | None = Query(None, description="Título da variável."),
-    dt_isoline: str | None = Query(
-        None, description="Intervalo de tempo para isolinhas."
-    ),
     contourf: bool | None = Query(None, description="Se usa contornos preenchidos."),
-    isolines: bool | None = Query(None, description="Se desenha isolinhas."),
-    barbs: bool | None = Query(None, description="Se desenha flechas de vento."),
-    quivers: bool | None = Query(None, description="Se desenha vetores de vento."),
-    shapecontours: str | None = Query(None, description="Contornos de shapefiles."),
-    mask: str | None = Query(None, description="Máscara geográfica aplicada."),
-    pad: float = Query(0.75, description="Espaçamento entre elementos."),
-    points: str | None = Query(None, description="Pontos geográficos."),
-    transparent: bool = Query(True, description="Se a imagem deve ser transparente."),
-    legend: str | None = Query(None, description="Legenda personalizada."),
-    polygon_color: str | None = Query(None, description="Cor de polígonos."),
-    alpha: float = Query(0.5, description="Transparência da imagem."),
+    contour: bool | None = Query(None, description="Se usa contornos de isolinhas."),
+    linewidths: float | None = Query(default=1, description="linewidths"),
+    color: str | None = Query(default="black", description="color"),
+    zorder: int | None = Query(default=1, description="zorder"),
     dpi: int = Query(100, description="Resolução da imagem."),
-    width: int = Query(15, description="Largura da imagem."),
-    height: int = Query(20, description="Altura da imagem."),
-    grid: bool = Query(True, description="Se exibe grade no mapa."),
+    levels: dict | list | None = Query(default=None, description="levels"),
+    extent: str | list | None = Query(None, description="Extensão geográfica do recorte."),
+    details: bool | dict | None = Query(True, description="details"),
+    gridlines: bool | None = Query(None, description="gridlines"),
+    mask: str | None = Query(None, description="mask"),
     ocean: bool = Query(True, description="Se desenha o oceano."),
-    pltmethod: str | None = Query(None, description="Método de plotagem."),
-    interpolation: str = Query("nearest", description="Método de interpolação."),
-    projection: str = Query("PlateCarree", description="Projeção cartográfica."),
-    basemap: str | None = Query(None, description="Basemap customizado."),
+    shapecontours: str | list | None = Query(None, description="Contornos de shapefiles."),
+    colorbar: str | None = Query(None, description="Colorbar utilizada."),
+
+    
+    # smoothed: bool = Query(False, description="Se os dados devem ser suavizados."),
+    # resolution: float | None = Query(None, description="Resolução da imagem."),
+    # windlevel: str | None = Query(None, description="Nível vertical do vento."),
+    # vmin: float | None = Query(None, description="Valor mínimo da escala de cores."),
+    # vmax: float | None = Query(None, description="Valor máximo da escala de cores."),
+    # freq: str | None = Query(None, description="Frequência temporal dos dados."),
+    # yclim: int = Query(1991, description="Ano base da climatologia."),
+    # title: str | None = Query(None, description="Título da figura."),
+    # cbar_cfg: str | None = Query(
+    #     None, description="Configuração personalizada do colorbar."
+    # ),
+    # showcolorbar: bool = Query(True, description="Exibir colorbar."),
+    # titlevariable: str | None = Query(None, description="Título da variável."),
+    # dt_isoline: str | None = Query(
+    #     None, description="Intervalo de tempo para isolinhas."
+    # ),
+    # barbs: bool | None = Query(None, description="Se desenha flechas de vento."),
+    # quivers: bool | None = Query(None, description="Se desenha vetores de vento."),
+    # pad: float = Query(0.75, description="Espaçamento entre elementos."),
+    # points: str | None = Query(None, description="Pontos geográficos."),
+    # transparent: bool = Query(True, description="Se a imagem deve ser transparente."),
+    # legend: str | None = Query(None, description="Legenda personalizada."),
+    # polygon_color: str | None = Query(None, description="Cor de polígonos."),
+    # alpha: float = Query(0.5, description="Transparência da imagem."),
+    # grid: bool = Query(True, description="Se exibe grade no mapa."),
+    # pltmethod: str | None = Query(None, description="Método de plotagem."),
+    # interpolation: str = Query("nearest", description="Método de interpolação."),
+    # projection: str = Query("PlateCarree", description="Projeção cartográfica."),
+    # basemap: str | None = Query(None, description="Basemap customizado."),
 ) -> MoonPngParams:
     return MoonPngParams(
         kind=kind,
@@ -167,43 +217,54 @@ def get_params(
         date=date,
         initDate=initDate,
         endDate=endDate,
-        hours=hours,
         aggregation=aggregation,
-        smoothed=smoothed,
-        resolution=resolution,
-        extent=extent,
-        windlevel=windlevel,
-        vmin=vmin,
-        vmax=vmax,
-        freq=freq,
-        yclim=yclim,
-        title=title,
-        cbar_cfg=cbar_cfg,
-        colorbar=colorbar,
-        showcolorbar=showcolorbar,
-        titlevariable=titlevariable,
-        dt_isoline=dt_isoline,
         contourf=contourf,
-        isolines=isolines,
-        barbs=barbs,
-        quivers=quivers,
-        shapecontours=shapecontours,
-        mask=mask,
-        pad=pad,
-        points=points,
-        transparent=transparent,
-        legend=legend,
-        polygon_color=polygon_color,
-        alpha=alpha,
+        contour=contour,
+        linewidths=linewidths,
+        color=color,
+        zorder=zorder,
         dpi=dpi,
-        width=width,
-        height=height,
-        grid=grid,
+        levels=levels,
+        extent=extent,
+        details=details,
+        gridlines=gridlines,
+        mask=mask,
         ocean=ocean,
-        pltmethod=pltmethod,
-        interpolation=interpolation,
-        projection=projection,
-        basemap=basemap,
+        shapecontours=shapecontours,
+        colorbar=colorbar,
+        # hours=hours,
+        # smoothed=smoothed,
+        # resolution=resolution,
+        # windlevel=windlevel,
+        # vmin=vmin,
+        # vmax=vmax,
+        # freq=freq,
+        # yclim=yclim,
+        # title=title,
+        # cbar_cfg=cbar_cfg,
+        # colorbar=colorbar,
+        # showcolorbar=showcolorbar,
+        # titlevariable=titlevariable,
+        # dt_isoline=dt_isoline,
+        # contourf=contourf,
+        # isolines=isolines,
+        # barbs=barbs,
+        # quivers=quivers,
+        # shapecontours=shapecontours,
+        # pad=pad,
+        # points=points,
+        # transparent=transparent,
+        # legend=legend,
+        # polygon_color=polygon_color,
+        # alpha=alpha,
+        # dpi=dpi,
+        # width=width,
+        # height=height,
+        # grid=grid,
+        # pltmethod=pltmethod,
+        # interpolation=interpolation,
+        # projection=projection,
+        # basemap=basemap,
     )
 
 
